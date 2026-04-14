@@ -1274,7 +1274,7 @@ function renderForm(t){
       <div class="fgroup"><label>狀態</label><select id="f-status" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px 10px;color:var(--text);font-family:var(--sans);font-size:13px;outline:none;width:100%;"><option value="觀察中" \${(!t.status||t.status==='觀察中')?'selected':''}>觀察中</option><option value="持倉中" \${t.status==='持倉中'?'selected':''}>持倉中</option><option value="已出清" \${t.status==='已出清'?'selected':''}>已出清</option></select></div>
       <div class="fgroup"><label>策略成立日期</label><input id="f-date" type="date" value="${t.date||''}"></div>
       <div class="fgroup"><label>停損價</label><input id="f-stopLoss" type="number" step="0.01" value="${t.stopLoss||''}" oninput="onPriceChange()"></div>
-      <div class="fgroup"><label>買入均價（一次買滿）</label><input id="f-buyPrice" type="number" step="0.01" value="${t.buyPrice||''}" oninput="onPriceChange()" placeholder="填入後自動計算"></div>
+            <div class="fgroup" id="f-stopLoss-hint-wrap" style="display:none">         <label>⚠ 停損建議</label>         <div id="f-stopLoss-hint" style="padding:8px 10px;border-radius:6px;font-family:var(--mono);font-size:12px;line-height:1.7;"></div>       </div>       <div class="fgroup"><label>買入均價（一次買滿）</label><input id="f-buyPrice" type="number" step="0.01" value="${t.buyPrice||''}" oninput="onPriceChange()" placeholder="填入後自動計算"></div>
       <div class="fgroup"><label>每日收盤價 <span style="color:var(--yellow)">★每日更新</span></label><input id="f-closePrice" type="number" step="0.01" value="${t.closePrice||''}"></div>
     </div>
     <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:12px 14px;margin-top:10px;">
@@ -1399,6 +1399,29 @@ function onPriceChange(){
   if (sugTrialEl) sugTrialEl.textContent = trial ? fmtN(trial) : '-';
   if (sugAdd1El)  sugAdd1El.textContent  = add1  ? fmtN(add1)  : '-';
   if (sugAdd2El)  sugAdd2El.textContent  = add2  ? fmtN(add2)  : '-';
+
+  // ── ★ 停損建議：20% 上限 vs 近10日低點 ──
+  const _hintWrap = document.getElementById('f-stopLoss-hint-wrap');
+  const _hintEl   = document.getElementById('f-stopLoss-hint');
+  const _refP     = bp || tp || 0;
+  if (_hintWrap && _hintEl && _refP > 0) {
+    const _stop20 = parseFloat((_refP * 0.8).toFixed(2));
+    _hintWrap.style.display = '';
+    if (!sl) {
+      _hintEl.style.cssText = 'padding:8px 10px;border-radius:6px;font-size:12px;line-height:1.7;background:var(--bg4);border:1px solid var(--border2);color:var(--text2)';
+      _hintEl.innerHTML = `20% 停損上限：<strong style="color:var(--yellow)">${fmtN(_stop20,2)}</strong>（均價 × 80%）<br>填入近10日最低點後自動判斷是否需改為此值`;
+    } else if (sl < _stop20) {
+      _hintEl.style.cssText = 'padding:8px 10px;border-radius:6px;font-size:12px;line-height:1.7;background:rgba(248,113,113,0.12);border:1px solid rgba(248,113,113,0.5);color:var(--red)';
+      _hintEl.innerHTML = `⚠ 近10日低點 <strong>${fmtN(sl,2)}</strong> 超過20%跌幅，須改為20%停損<br>建議停損價：<strong style="font-size:14px">${fmtN(_stop20,2)}</strong> <button onclick="document.getElementById('f-stopLoss').value='${_stop20}';onPriceChange();" style="margin-left:10px;padding:3px 12px;background:var(--red2);border:1px solid var(--red);border-radius:5px;color:var(--red);cursor:pointer;font-size:12px;font-family:var(--sans);font-weight:600;">套用 ${fmtN(_stop20,2)}</button>`;
+    } else {
+      const _distPct = ((_refP - sl) / _refP * 100).toFixed(1);
+      _hintEl.style.cssText = 'padding:8px 10px;border-radius:6px;font-size:12px;line-height:1.7;background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.3);color:var(--green)';
+      _hintEl.innerHTML = `✅ 近10日低點 <strong>${fmtN(sl,2)}</strong> 合理（距均價 ${_distPct}%，未超過20%）<br>20% 停損上限為 ${fmtN(_stop20,2)}`;
+    }
+  } else if (_hintWrap) {
+    _hintWrap.style.display = 'none';
+  }
+  // ────────────────────────────────────────────────────────────────
 
   // 金字塔各批建議
   document.getElementById('f-trialSug').textContent=fmtN(calcTrialShares(tp,sl))||'-';
