@@ -860,14 +860,14 @@ function rowToTrade(headers, row) {
 function tradeToRow(t) {
   const row = [
     t.id, t.code, t.name||'', t.date||'', t.status||'',
-    t.stopLoss||0, t.buyPrice||0, t.closePrice||0,
-    t.trialPrice||0, t.trialShares||0, t.trialDate||'',
-    t.add1Price||0, t.add1Shares||0, t.add1Date||'',
-    t.add2Price||0, t.add2Shares||0, t.add2Date||'',
+    t.stopLoss||'', t.buyPrice||'', t.closePrice||'',
+    t.trialPrice||'', t.trialShares||'', t.trialDate||'',
+    t.add1Price||'', t.add1Shares||'', t.add1Date||'',
+    t.add2Price||'', t.add2Shares||'', t.add2Date||'',
   ];
   ['stop','day40','day80','moving','protect','breakLow','ema20','ema50','ema100'].forEach(k => {
     const e = t.exits?.[k] || {};
-    row.push(e.price||0, e.shares||0, e.sharesOverride||0, e.date||'');
+    row.push(e.price||'', e.shares||'', e.sharesOverride||'', e.date||'');
   });
   return row;
 }
