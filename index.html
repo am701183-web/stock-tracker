@@ -616,6 +616,7 @@ document.getElementById('signInBtn').onclick = () => {
       tokenClient.requestAccessToken({ prompt: 'consent' });
     }
   };
+}
 
 function signOut() {
   stopTokenRefresh();
