@@ -1561,7 +1561,7 @@ async function saveTrade(){
   const trade={
     id:editingId||('t'+Date.now()),
     code, name:document.getElementById('f-name').value||STOCK_CODES[code]||'',
-       status: (() => {       const _ts = parseFloat(document.getElementById('f-trialShares').value)||0;       const _a1s = parseFloat(document.getElementById('f-add1Shares').value)||0;       const _a2s = parseFloat(document.getElementById('f-add2Shares').value)||0;       const _totalShares = _ts + _a1s + _a2s;       // 計算已出場股數       const _exitKeys = ['stop','day40','day80','moving','protect','breakLow','ema20','ema50','ema100'];       const _soldShares = _exitKeys.reduce((s,k) => {         const ov = parseInt(document.getElementById(`ex-${k}-shares`)?.value)||0;         const ep = parseFloat(document.getElementById(`ex-${k}-price`)?.value)||0;         return s + (ep ? (ov || 0) : 0);       }, 0);       if (_totalShares === 0) return '觀察中';       if (_soldShares >= _totalShares) return '已出清';       return '持倉中';     })(),
+      status: (ts+a1s+a2s === 0) ? '觀察中' : (()=>{const _ex=['stop','day40','day80','moving','protect','breakLow','ema20','ema50','ema100'];const _sold=_ex.reduce((s,k)=>{const ep=parseFloat(document.getElementById('ex-'+k+'-price')?.value)||0;const ov=parseInt(document.getElementById('ex-'+k+'-shares')?.value)||0;return s+(ep?(ov||0):0);},0);return _sold>=(ts+a1s+a2s)?'已出清':'持倉中';})(),
     date:document.getElementById('f-date').value||'',
     stopLoss:sl,
     buyPrice:parseFloat(document.getElementById('f-buyPrice').value)||0,
