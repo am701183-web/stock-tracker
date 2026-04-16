@@ -1285,7 +1285,7 @@ function renderForm(t){
     <div class="form-grid">
       <div class="fgroup"><label>股號</label><input id="f-code" type="text" value="${t.code||''}" placeholder="如 2330" oninput="onCodeInput(this)"></div>
       <div class="fgroup"><label>股名</label><input id="f-name" type="text" value="${t.name||''}" placeholder="自動帶入（可手動輸入）"></div>
-      <div class="fgroup"><label>狀態</label><select id="f-status" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px 10px;color:var(--text);font-family:var(--sans);font-size:13px;outline:none;width:100%;"><option value="觀察中" \${(!t.status||t.status==='觀察中')?'selected':''}>觀察中</option><option value="持倉中" \${t.status==='持倉中'?'selected':''}>持倉中</option><option value="已出清" \${t.status==='已出清'?'selected':''}>已出清</option></select></div>
+      <div class="fgroup"><label>狀態</label><div class="auto-val" id="f-status-display" style="color:var(--cyan)">自動判斷</div><input type="hidden" id="f-status" value="${t.status||'觀察中'}"></div>
       <div class="fgroup"><label>策略成立日期</label><input id="f-date" type="date" value="${t.date||''}"></div>
       <div class="fgroup"><label>停損價</label><input id="f-stopLoss" type="number" step="0.01" value="${t.stopLoss||''}" oninput="onPriceChange()"></div>
             <div class="fgroup" id="f-stopLoss-hint-wrap" style="display:none">         <label>⚠ 停損建議</label>         <div id="f-stopLoss-hint" style="padding:8px 10px;border-radius:6px;font-family:var(--mono);font-size:12px;line-height:1.7;"></div>       </div>       <div class="fgroup"><label>買入均價（一次買滿）</label><input id="f-buyPrice" type="number" step="0.01" value="${t.buyPrice||''}" oninput="onPriceChange()" placeholder="填入後自動計算"></div>
@@ -1561,7 +1561,7 @@ async function saveTrade(){
   const trade={
     id:editingId||('t'+Date.now()),
     code, name:document.getElementById('f-name').value||STOCK_CODES[code]||'',
-    status:document.getElementById('f-status')?.value||'觀察中',
+       status: (() => {       const _ts = parseFloat(document.getElementById('f-trialShares').value)||0;       const _a1s = parseFloat(document.getElementById('f-add1Shares').value)||0;       const _a2s = parseFloat(document.getElementById('f-add2Shares').value)||0;       const _totalShares = _ts + _a1s + _a2s;       // 計算已出場股數       const _exitKeys = ['stop','day40','day80','moving','protect','breakLow','ema20','ema50','ema100'];       const _soldShares = _exitKeys.reduce((s,k) => {         const ov = parseInt(document.getElementById(`ex-${k}-shares`)?.value)||0;         const ep = parseFloat(document.getElementById(`ex-${k}-price`)?.value)||0;         return s + (ep ? (ov || 0) : 0);       }, 0);       if (_totalShares === 0) return '觀察中';       if (_soldShares >= _totalShares) return '已出清';       return '持倉中';     })(),
     date:document.getElementById('f-date').value||'',
     stopLoss:sl,
     buyPrice:parseFloat(document.getElementById('f-buyPrice').value)||0,
