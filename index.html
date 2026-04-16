@@ -599,10 +599,23 @@ function initGoogleAuth() {
     },
   });
 
-  document.getElementById('signInBtn').onclick = () => {
-    tokenClient.requestAccessToken({ prompt: 'consent' });
+document.getElementById('signInBtn').onclick = () => {
+    // 偵測 iOS WebView（Messenger、LINE 等內建瀏覽器）
+    const isIOSWebView = /(iPhone|iPod|iPad).*AppleWebKit(?!.*Safari)/i.test(navigator.userAgent);
+    // 偵測 Android WebView
+    const isAndroidWebView = /wv/.test(navigator.userAgent) || 
+      (/Android/.test(navigator.userAgent) && !/Chrome\/[.0-9]*/.test(navigator.userAgent));
+    
+    if (isIOSWebView || isAndroidWebView) {
+      // WebView 環境：提示用戶用系統瀏覽器開啟
+      notify('請用 Safari 或 Chrome 開啟此頁面再登入', true);
+      setTimeout(() => {
+        window.open('https://am701183-web.github.io/stock-tracker/', '_blank');
+      }, 1500);
+    } else {
+      tokenClient.requestAccessToken({ prompt: 'consent' });
+    }
   };
-}
 
 function signOut() {
   stopTokenRefresh();
