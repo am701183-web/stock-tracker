@@ -574,6 +574,27 @@ let isSaving = false;
 let tokenClient;
 
 function initGoogleAuth() {
+  // 處理 redirect 登入後 URL hash 裡的 token
+  const hash = window.location.hash;
+  if (hash && hash.includes('access_token')) {
+    const params = new URLSearchParams(hash.substring(1));
+    const token = params.get('access_token');
+    if (token) {
+      accessToken = token;
+      history.replaceState(null, '', window.location.pathname); // 清掉 URL hash
+      fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: 'Bearer ' + token }
+      }).then(r => r.json()).then(info => {
+        userEmail = info.email || '';
+        document.getElementById('userEmail').textContent = userEmail;
+      }).catch(()=>{});
+      showApp();
+      loadFromSheets();
+      return; // 不需要再初始化 tokenClient
+    }
+  }
+
+  if (typeof google === 'undefined') { setTimeout(initGoogleAuth, 300); return; }
   // Wait for GIS to load
   if (typeof google === 'undefined') {
     setTimeout(initGoogleAuth, 300);
@@ -599,10 +620,24 @@ function initGoogleAuth() {
     },
   });
 
+ // 偵測是否為 WebView（手機 App 內建瀏覽器）
+  const isWebView = /wv|WebView/i.test(navigator.userAgent) ||
+    (/(iPhone|iPod|iPad).*AppleWebKit(?!.*Safari)/i.test(navigator.userAgent));
+
   document.getElementById('signInBtn').onclick = () => {
-    tokenClient.requestAccessToken({ prompt: 'consent' });
+    if (isWebView) {
+      // WebView 環境：導向外部瀏覽器開啟系統登入頁
+      const authUrl = 'https://accounts.google.com/o/oauth2/v2/auth?' +
+        'client_id=' + CLIENT_ID +
+        '&redirect_uri=' + encodeURIComponent('https://am701183-web.github.io/stock-tracker/') +
+        '&response_type=token' +
+        '&scope=' + encodeURIComponent(SCOPES) +
+        '&prompt=consent';
+      window.location.href = authUrl;
+    } else {
+      tokenClient.requestAccessToken({ prompt: 'consent' });
+    }
   };
-}
 
 function signOut() {
   stopTokenRefresh();
